@@ -1,0 +1,29 @@
+{
+  "name": "@ideator.dev/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@clerk/backend": "^3.2.1",
+    "@ideator.dev/db": "workspace:*",
+    "@ideator.dev/env": "workspace:*",
+    "@orpc/client": "catalog:",
+    "@orpc/openapi": "catalog:",
+    "@orpc/server": "catalog:",
+    "@orpc/zod": "catalog:",
+    "dotenv": "catalog:",
+    "next": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@ideator.dev/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

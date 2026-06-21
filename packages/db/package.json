@@ -1,0 +1,23 @@
+{
+  "name": "@ideator.dev/db",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@ideator.dev/env": "workspace:*",
+    "dotenv": "catalog:",
+    "mongoose": "^9.6.2",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@ideator.dev/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

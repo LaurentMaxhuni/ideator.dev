@@ -1,0 +1,3 @@
+{
+  "extends": "@ideator.dev/config/tsconfig.base.json"
+}
