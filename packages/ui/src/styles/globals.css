@@ -1,4 +1,4 @@
-@layer theme, base, clerk, components, utilities;
+@layer theme, base, components, utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,76 +8,51 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: #1d3440;
+  --foreground: #fff7e7;
+  --card: #274855;
+  --card-foreground: #fff7e7;
+  --popover: #25434f;
+  --popover-foreground: #fff7e7;
+  --primary: #ffd35c;
+  --primary-foreground: #122630;
+  --secondary: #376375;
+  --secondary-foreground: #fff7e7;
+  --muted: #2f5665;
+  --muted-foreground: #d3dedc;
+  --accent: #bceee4;
+  --accent-foreground: #122630;
+  --destructive: #f08b80;
+  --border: rgb(255 247 231 / 22%);
+  --input: rgb(255 247 231 / 30%);
+  --ring: #ffd35c;
+  --radius: 1rem;
+  --sidebar: #23414d;
+  --sidebar-foreground: #fff7e7;
+  --sidebar-primary: #ffd35c;
+  --sidebar-primary-foreground: #122630;
+  --sidebar-accent: #bceee4;
+  --sidebar-accent-foreground: #122630;
+  --sidebar-border: rgb(255 247 231 / 22%);
+  --sidebar-ring: #ffd35c;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.371 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  color-scheme: dark;
 }
 
 @theme inline {
-  --font-sans: "Inter Variable", sans-serif;
+  --font-sans: var(--font-outfit), "Segoe UI", system-ui, sans-serif;
+  --ease-spring: linear(
+    0, 0.155 3.24%, 0.3949 8.87%, 0.7929 19.9%, 0.9448 25.03%,
+    1.0434 31.1%, 1.0866 36.15%, 1.1018 40.2%, 1.1021 46.16%,
+    1.0734 56.18%, 1.0182 71.29%, 0.9962 84.19%, 1
+  );
+  --ease-soft: linear(
+    0, 0.0981 4.34%, 0.1924 8.83%, 0.3526 16.66%, 0.5014 25.23%,
+    0.6412 34.82%, 0.7483 44.04%, 0.8307 53.11%, 0.8876 61.29%,
+    0.9287 69.62%, 0.9783 88.16%, 0.9925 97.47%, 1
+  );  --font-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -86,11 +61,6 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -109,23 +79,169 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 5px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply font-sans bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+    background: var(--background);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    min-width: 320px;
+  }
+
+  /* HARD RULE: every interactive element gets eased hover/press feedback,
+     even when a component forgets a transition-* class. Utilities override
+     this via layer precedence; reduced-motion users get no transition. */
+  @media (prefers-reduced-motion: no-preference) {
+    a,
+    button,
+    [role=button],
+    summary,
+    label,
+    input,
+    textarea,
+    select {
+      transition-property: color, background-color, border-color, outline-color,
+        text-decoration-color, fill, stroke, opacity, box-shadow,
+        transform, translate, scale, rotate, filter;
+      transition-duration: 200ms;
+      transition-timing-function: var(--ease-spring);
+    }
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 35%, transparent);
+    color: var(--foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .brand-mark {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
+    font-family: var(--font-sans);
+    font-size: 1.08rem;
+    font-weight: 700;
+    letter-spacing: -0.055em;
+    line-height: 1;
+  }
+
+  .brand-mark__dot {
+    display: block;
+    width: 0.3rem;
+    height: 0.3rem;
+    flex: 0 0 auto;
+    margin: 0 0.14rem 0.05rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fde68a 0%, #fbbf24 52%, #f97316 100%);
+    box-shadow: 0 0 0 0.08rem rgb(251 191 36 / 10%), 0 0 0.52rem rgb(251 191 36 / 58%);
+  }
+
+  /* Product surfaces outside the landing hero share a calmer easing curve. */
+  .non-landing-ui {
+    --motion-ease-ui: var(--ease-spring);
+  }
+
+  /* Faint workbench grid shared by the app shell and auth panel. */
+  .cockpit-grid {
+    background-color: var(--background);
+    background-image:
+      linear-gradient(rgb(255 247 231 / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 247 231 / 0.03) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+    box-shadow: 0 16px 36px rgb(4 18 24 / 18%);
+  }
+
+  .panel-quiet {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--card) 68%, transparent);
+  }
+
+  .eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .display-type {
+    letter-spacing: -0.045em;
+  }
+
+  .button-lift {
+    cursor: pointer;
+    transition: transform 200ms var(--ease-spring),
+      background-color 200ms var(--ease-spring),
+      border-color 200ms var(--ease-spring),
+      box-shadow 200ms var(--ease-spring),
+      color 200ms var(--ease-spring);
+  }
+
+  .button-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .button-lift:active {
+    transform: translateY(1px) scale(0.985);
+  }
+
+  .button-lift:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Landing hero depth — pure CSS, no external imagery. */
+  .glow-field {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(52rem 32rem at 88% -12%, rgb(255 211 92 / 0.12), transparent 60%),
+      radial-gradient(46rem 30rem at 6% 112%, rgb(188 238 228 / 0.09), transparent 62%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer utilities {
+  .non-landing-ui :where(*) {
+    transition-timing-function: var(--motion-ease-ui) !important;
   }
 }

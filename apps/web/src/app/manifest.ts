@@ -4,21 +4,17 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "ideator.dev",
     short_name: "ideator.dev",
-    description: "my pwa app",
-    start_url: "/new",
+    description: "Find, combine, and pressure-test product ideas before you build them.",
+    start_url: "/app",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#000000",
+    background_color: "#1d3440",
+    theme_color: "#1d3440",
     icons: [
       {
-        src: "/favicon/web-app-manifest-192x192.png",
-        sizes: "192x192",
-        type: "image/png",
-      },
-      {
-        src: "/favicon/web-app-manifest-512x512.png",
-        sizes: "512x512",
-        type: "image/png",
+        src: "/icon.svg",
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "maskable",
       },
     ],
   };

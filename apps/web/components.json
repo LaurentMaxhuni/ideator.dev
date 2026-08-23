@@ -20,5 +20,7 @@
   },
   "menuColor": "default",
   "menuAccent": "subtle",
-  "registries": {}
+  "registries": {
+    "watermelon": "https://registry.watermelon.sh/r/{name}.json"
+  }
 }

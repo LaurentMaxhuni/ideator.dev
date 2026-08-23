@@ -9,15 +9,22 @@
       "default": "./src/*.ts"
     }
   },
-  "scripts": {},
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push"
+  },
   "dependencies": {
     "@ideator.dev/env": "workspace:*",
+    "@neondatabase/serverless": "catalog:",
+    "drizzle-orm": "catalog:",
     "dotenv": "catalog:",
-    "mongoose": "^9.6.2",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@ideator.dev/config": "workspace:*",
+    "drizzle-kit": "^0.31.10",
     "typescript": "catalog:"
   }
 }

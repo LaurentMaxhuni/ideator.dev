@@ -1,0 +1,25 @@
+{
+  "name": "@ideator.dev/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types src/schemas.test.ts src/providers.test.ts"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@ideator.dev/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

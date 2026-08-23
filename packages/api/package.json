@@ -9,9 +9,10 @@
       "default": "./src/*.ts"
     }
   },
-  "scripts": {},
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
   "dependencies": {
-    "@clerk/backend": "^3.2.1",
     "@ideator.dev/db": "workspace:*",
     "@ideator.dev/env": "workspace:*",
     "@orpc/client": "catalog:",

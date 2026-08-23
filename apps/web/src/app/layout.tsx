@@ -1,24 +1,21 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import { Outfit } from "next/font/google";
 
 import "../index.css";
-import { Geist, Geist_Mono } from "next/font/google";
 
 import Providers from "@/components/providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  display: "swap",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: "ideator.dev",
-  description: "ideator.dev",
+  description: "Find, combine, and pressure-test product ideas before you build them.",
+  metadataBase: new URL("https://ideator.dev"),
 };
 
 export default function RootLayout({
@@ -28,12 +25,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ClerkProvider>
-          <Providers>
-            {children}
-          </Providers>
-        </ClerkProvider>
+      <body className={`${outfit.variable} antialiased`}>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

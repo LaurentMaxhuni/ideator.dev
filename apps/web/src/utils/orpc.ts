@@ -5,8 +5,6 @@ import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { getClerkAuthToken } from "@/utils/clerk-auth";
-
 export function createQueryClient() {
   return new QueryClient({
     queryCache: new QueryCache({
@@ -28,18 +26,6 @@ export const queryClient = createQueryClient();
 
 export const link = new RPCLink({
   url: `${typeof window !== "undefined" ? window.location.origin : "http://localhost:3001"}/api/rpc`,
-  headers: async () => {
-    if (typeof window !== "undefined") {
-      const token = await getClerkAuthToken();
-      return token ? { Authorization: `Bearer ${token}` } : {};
-    }
-
-    const { auth } = await import("@clerk/nextjs/server");
-    const clerkAuth = await auth();
-    const token = await clerkAuth.getToken();
-
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  },
 });
 
 export const client: AppRouterClient = createORPCClient(link);

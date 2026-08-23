@@ -1,12 +1,24 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-export default clerkMiddleware();
+import { auth } from "@/lib/auth/server";
+
+const neonAuthMiddleware = auth?.middleware({ loginUrl: "/login" });
+
+function fallbackMiddleware(request: NextRequest) {
+  const next = request.nextUrl.clone();
+  next.pathname = "/login";
+  next.searchParams.set("next", request.nextUrl.pathname);
+  return NextResponse.redirect(next);
+}
+
+export default function proxy(request: NextRequest) {
+  if (neonAuthMiddleware) {
+    return neonAuthMiddleware(request);
+  }
+
+  return fallbackMiddleware(request);
+}
 
 export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
-  ],
+  matcher: ["/app/:path*"],
 };
