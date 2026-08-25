@@ -1,14 +1,14 @@
 "use client";
 
-import { ArrowRight, ArrowUpRight, Eye, EyeOff } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 import { useState, type FormEvent } from "react";
 
-import { BrandMark } from "@/components/brand-mark";
+import { AuthShell } from "@/components/auth-shell";
 import { authClient } from "@/lib/auth/client";
+import { emailsMatch } from "@/lib/auth/email";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -16,45 +16,103 @@ type LoginFormProps = {
   initialMode?: AuthMode;
 };
 
-const inputClass = "mt-1 min-h-10 w-full border-0 bg-transparent px-0 py-1 text-base text-foreground outline-none transition-colors duration-200 ease-spring placeholder:text-muted-foreground/50 lg:min-h-12 lg:py-2 lg:text-[1.05rem]";
-const quietLinkClass = "inline-flex min-h-10 cursor-pointer items-center gap-2 transition-[color,transform] duration-200 ease-spring hover:-translate-y-0.5 hover:text-foreground";
-const microLabelClass = "text-[0.68rem] font-semibold uppercase tracking-[0.12em]";
-const fieldLabelClass = "text-xs font-semibold uppercase tracking-[0.1em]";
+const inputClass =
+  "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
+const fieldLabelClass = "auth-field-label text-sm font-medium text-foreground/85";
+const SIGN_IN_FAILURE = "We could not sign you in. Check your details and try again.";
+const SIGN_UP_FAILURE = "We could not create your account right now. Please try again later.";
+
+function safeNextPath(value: string | null) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
+}
+
+function verificationHref(email: string, nextPath: string) {
+  return `/verify-email?${new URLSearchParams({ email, next: nextPath }).toString()}`;
+}
 
 export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const reduceMotion = useReducedMotion();
-  const mode = initialMode;
-  const isSignIn = mode === "sign-in";
+  const isSignIn = initialMode === "sign-in";
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email")?.trim().toLowerCase() ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
-  const nextPath = searchParams.get("next")?.startsWith("/") ? searchParams.get("next") ?? "/app" : "/app";
-  const alternateHref = `${isSignIn ? "/signup" : "/login"}?${new URLSearchParams({ next: nextPath }).toString()}`;
+  const nextPath = safeNextPath(searchParams.get("next"));
+  const query = new URLSearchParams({ next: nextPath });
+  if (email.trim()) query.set("email", email.trim().toLowerCase());
+  const alternateHref = `${isSignIn ? "/signup" : "/login"}?${query.toString()}`;
+  const verifyHref = verificationHref(email.trim().toLowerCase(), nextPath);
+  const verifiedNotice = isSignIn && searchParams.get("verified") === "1";
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setPending(true);
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
-      const result = isSignIn
-        ? await authClient.signIn.email({ email, password })
-        : await authClient.signUp.email({ name: name || email.split("@")[0] || "Builder", email, password });
+      if (isSignIn) {
+        const result = await authClient.signIn.email({ email: normalizedEmail, password });
+
+        if (result.error) {
+          setError(SIGN_IN_FAILURE);
+          return;
+        }
+
+        if (!result.data?.user) {
+          setError(SIGN_IN_FAILURE);
+          return;
+        }
+
+        const session = await authClient.getSession();
+
+        if (!session.data?.session || !emailsMatch(session.data.user?.email, normalizedEmail)) {
+          setError(SIGN_IN_FAILURE);
+          return;
+        }
+
+        router.replace(nextPath);
+        router.refresh();
+        return;
+      }
+
+      const result = await authClient.signUp.email({
+        name: name.trim() || normalizedEmail.split("@")[0] || "Builder",
+        email: normalizedEmail,
+        password,
+      });
 
       if (result.error) {
-        setError(result.error.message || "Authentication failed. Check your details and try again.");
+        setError(SIGN_UP_FAILURE);
+        return;
+      }
+
+      if (result.data?.user && !result.data.user.emailVerified) {
+        router.push(verificationHref(normalizedEmail, nextPath));
+        return;
+      }
+
+      if (!result.data?.user) {
+        router.push(verificationHref(normalizedEmail, nextPath));
+        return;
+      }
+
+      const session = await authClient.getSession();
+
+      if (!session.data?.session || !emailsMatch(session.data.user?.email, normalizedEmail)) {
+        setError("Your account was created. Sign in to continue.");
         return;
       }
 
       router.replace(nextPath);
       router.refresh();
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Authentication failed. Try again.");
+    } catch {
+      setError(isSignIn ? SIGN_IN_FAILURE : SIGN_UP_FAILURE);
     } finally {
       setPending(false);
     }
@@ -68,146 +126,141 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
       const result = await authClient.signIn.social({ provider: "google", callbackURL: nextPath });
 
       if (result.error) {
-        setError(result.error.message || "Google sign-in is not available yet.");
+        setError("Google sign-in is unavailable. Try again.");
       }
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Google sign-in failed. Try again.");
+    } catch {
+      setError("Google sign-in is unavailable. Try again.");
     } finally {
       setPending(false);
     }
   }
 
+  const footer = (
+    <div className={`auth-footer mt-3 flex min-h-11 items-center gap-3 text-sm text-muted-foreground ${isSignIn ? "justify-between" : "justify-center"}`}>
+      <p className="flex items-center gap-1">
+        {isSignIn ? "Need an account?" : "Have an account?"}
+        <Link href={alternateHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
+          {isSignIn ? "Register" : "Sign in"}
+        </Link>
+      </p>
+      {isSignIn && (
+        <Link href={verifyHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
+          Verify email
+        </Link>
+      )}
+    </div>
+  );
+
   return (
-    <main className="non-landing-ui h-dvh max-h-dvh overflow-hidden bg-background text-foreground">
-      <div className="grid h-full min-h-0 lg:grid-cols-2">
-        <section className="relative isolate flex h-[112px] min-h-0 flex-col overflow-hidden border-b border-border bg-[url('/pattern.svg')] bg-repeat bg-[length:60px_60px] lg:h-dvh lg:border-b-0 lg:border-r">
-          <div className="relative z-10 flex h-full min-h-0 flex-1 flex-col px-6 py-5 sm:px-10 sm:py-6 lg:min-h-dvh lg:px-12 lg:py-10">
-            <header className="flex items-center gap-4">
-              <BrandMark href="/" dotClassName="!bg-primary !bg-none !shadow-none" className="cursor-pointer text-[1.35rem]" />
-            </header>
+    <AuthShell
+      title={isSignIn ? "Sign in" : "Create account"}
+      description={isSignIn ? "Use your account email and password." : "Create an account to save and revisit your work."}
+      footer={footer}
+    >
+      {verifiedNotice && (
+        <p className="auth-message mb-3 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent" role="status">
+          Email verified. You can sign in now.
+        </p>
+      )}
 
-            <h1 className="sr-only">{isSignIn ? "Sign in to ideator.dev" : "Create your ideator.dev account"}</h1>
+      <form
+        onSubmit={handleSubmit}
+        className={`auth-form grid gap-3 ${isSignIn ? "" : "auth-form-signup"}`}
+        aria-busy={pending}
+      >
+        {!isSignIn && (
+          <div className="auth-form-field">
+            <div className="flex items-baseline justify-between gap-4">
+              <label htmlFor="name" className={fieldLabelClass}>
+                Name
+              </label>
+              <span className="text-xs text-muted-foreground">Optional</span>
+            </div>
+            <input
+              id="name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              autoComplete="name"
+              className={inputClass}
+              placeholder="Your name"
+            />
           </div>
-        </section>
-        <section className="relative flex h-[calc(100dvh-112px)] min-h-0 flex-col overflow-hidden lg:h-dvh" aria-labelledby="auth-title">
-          <header className="flex shrink-0 items-center justify-between gap-4 px-6 py-3 sm:px-10 sm:py-6 lg:px-12 lg:py-10">
-            <Link href="/" className={`${quietLinkClass} text-xs text-muted-foreground`}>
-              Back to product home <ArrowUpRight className="size-3.5" aria-hidden="true" />
-            </Link>
-          </header>
+        )}
 
-          <div className="flex min-h-0 flex-1 items-center overflow-y-auto px-6 py-2 sm:px-10 sm:py-8 lg:overflow-hidden lg:px-12 lg:py-12 xl:px-20">
-            <motion.div
-              initial={{ opacity: 0, y: 22 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ type: "tween", duration: reduceMotion ? 0 : 0.75, delay: reduceMotion ? 0 : 0.16, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-[520px]"
+        <div className="auth-form-field">
+          <label htmlFor="email" className={fieldLabelClass}>
+            Email
+          </label>
+          <input
+            id="email"
+            required
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
+            className={inputClass}
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div className="auth-form-field auth-form-field-password">
+          <label htmlFor="password" className={fieldLabelClass}>
+            Password
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              required
+              minLength={8}
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete={isSignIn ? "current-password" : "new-password"}
+              className={`${inputClass} pr-12`}
+              placeholder="8 characters minimum"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              className="absolute right-1 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary/50 hover:text-foreground focus-visible:bg-secondary/50"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
             >
-              <div className="flex items-start justify-between gap-6 border-b border-border pb-4 lg:pb-7">
-                <div>
-                  <p className={`${microLabelClass} text-muted-foreground`}>{isSignIn ? "returning builder" : "new builder"}</p>
-                  <h2 id="auth-title" className="mt-2 text-[clamp(2.35rem,4vw,4.3rem)] font-normal leading-[0.92] tracking-[-0.045em] lg:mt-4">
-                    {isSignIn ? "Welcome back." : "Create your account."}
-                  </h2>
-                </div>
-                <span className="mt-1 text-xs font-semibold tabular-nums text-muted-foreground">0{isSignIn ? "1" : "2"}</span>
-              </div>
-
-              <p className="mt-3 max-w-[410px] text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7 lg:mt-6">
-                {isSignIn ? "Use the email attached to your account." : "One rough thought is enough to begin. You can shape the rest inside."}
-              </p>
-
-              <form onSubmit={handleSubmit} className="mt-4 space-y-3 lg:mt-10 lg:space-y-6" aria-busy={pending}>
-                {!isSignIn && (
-                  <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
-                    <div className="flex items-baseline justify-between gap-4">
-                      <label htmlFor="name" className={`${fieldLabelClass} text-muted-foreground`}>Name</label>
-                      <span className="text-[0.68rem] text-muted-foreground/80">optional</span>
-                    </div>
-                    <input id="name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" className={inputClass} placeholder="How should we greet you?" />
-                  </div>
-                )}
-
-                <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
-                  <label htmlFor="email" className={`${fieldLabelClass} block text-muted-foreground`}>Email</label>
-                  <input id="email" required type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" className={inputClass} placeholder="you@example.com" />
-                </div>
-
-                <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
-                  <label htmlFor="password" className={`${fieldLabelClass} block text-muted-foreground`}>Password</label>
-                  <div className="relative">
-                    <input
-                      id="password"
-                      required
-                      minLength={8}
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      autoComplete={isSignIn ? "current-password" : "new-password"}
-                      className={`${inputClass} pr-12`}
-                      placeholder="At least 8 characters"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((visible) => !visible)}
-                      className="absolute right-0 top-1/2 inline-flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors duration-180 ease-spring hover:bg-secondary/50 hover:text-foreground focus-visible:bg-secondary/50"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      aria-pressed={showPassword}
-                    >
-                      {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
-                    </button>
-                  </div>
-                </div>
-
-                <AnimatePresence initial={false}>
-                  {error && (
-                    <motion.p
-                      key={error}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 8 }}
-                      transition={{ type: "tween", duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="border-l-2 border-destructive bg-destructive/10 px-4 py-3 text-xs leading-5 text-destructive"
-                      role="alert"
-                      aria-live="polite"
-                    >
-                      {error}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-
-                <button
-                  type="submit"
-                  disabled={pending}
-                  className="button-lift inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors duration-180 ease-spring hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60 lg:min-h-14"
-                >
-                  {pending ? "Signing in..." : isSignIn ? "Sign in" : "Create account"}
-                  {!pending && <ArrowRight className="size-4" aria-hidden="true" />}
-                </button>
-              </form>
-
-              <div className={`my-3 flex items-center gap-4 ${microLabelClass} text-muted-foreground lg:my-6`}><span className="h-px flex-1 bg-border" /><span>or</span><span className="h-px flex-1 bg-border" /></div>
-
-              <button
-                type="button"
-                onClick={handleGoogle}
-                disabled={pending}
-                className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border border-border bg-transparent px-5 text-sm font-medium text-foreground transition-colors duration-180 ease-spring hover:border-foreground/40 hover:bg-white/[0.04] disabled:cursor-wait disabled:opacity-60 lg:min-h-14"
-              >
-                <FcGoogle className="size-5" aria-hidden="true" />
-                Continue with Google
-              </button>
-
-              <p className="mt-3 border-t border-border/70 pt-3 text-xs leading-5 text-muted-foreground lg:mt-7 lg:pt-5">
-                {isSignIn ? "New to ideator.dev?" : "Already have an account?"}{" "}
-                <Link href={alternateHref} className="cursor-pointer font-semibold text-foreground underline decoration-primary/70 underline-offset-4 transition-colors duration-200 ease-spring hover:text-primary">
-                  {isSignIn ? "Create an account" : "Sign in"}
-                </Link>
-              </p>
-            </motion.div>
+              {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
+            </button>
           </div>
-        </section>
+        </div>
+
+        {error && (
+          <div className="auth-message rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive" role="alert" aria-live="polite">
+            {error}
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="auth-button inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+        >
+          {pending ? (isSignIn ? "Signing in..." : "Creating account...") : isSignIn ? "Sign in" : "Create account"}
+        </button>
+      </form>
+
+      <div className="auth-divider my-3 flex items-center gap-3 text-xs text-muted-foreground" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        <span>or</span>
+        <span className="h-px flex-1 bg-border" />
       </div>
-    </main>
+
+      <button
+        type="button"
+        onClick={handleGoogle}
+        disabled={pending}
+        className="auth-button inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-md border border-input bg-card/30 px-5 text-sm font-semibold text-foreground hover:border-foreground/40 hover:bg-card/60 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
+      >
+        <FcGoogle className="size-5" aria-hidden="true" />
+        {isSignIn ? "Sign in with Google" : "Sign up with Google"}
+      </button>
+    </AuthShell>
   );
 }
