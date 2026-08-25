@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowRight, Eye, EyeOff } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
@@ -18,9 +17,8 @@ type LoginFormProps = {
 };
 
 const inputClass =
-  "mt-1 min-h-10 w-full border-0 bg-transparent px-0 py-1 text-base text-foreground outline-none transition-colors duration-200 ease-spring placeholder:text-muted-foreground/50 lg:min-h-12 lg:py-2 lg:text-[1.05rem]";
-const microLabelClass = "text-[0.68rem] font-semibold uppercase tracking-[0.12em]";
-const fieldLabelClass = "text-xs font-semibold uppercase tracking-[0.1em]";
+  "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
+const fieldLabelClass = "auth-field-label text-sm font-medium text-foreground/85";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
@@ -33,7 +31,6 @@ function verificationHref(email: string, nextPath: string) {
 export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const reduceMotion = useReducedMotion();
   const isSignIn = initialMode === "sign-in";
   const [name, setName] = useState("");
   const [email, setEmail] = useState(searchParams.get("email")?.trim().toLowerCase() ?? "");
@@ -63,12 +60,12 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
       if (isSignIn) {
         if (!account.exists) {
           setSuggestRegistration(true);
-          setError("No account exists for this email. Register first, then come back to sign in.");
+          setError("No account found for this email.");
           return;
         }
 
         if (!account.hasPassword) {
-          setError("This account does not have a password. Continue with Google instead.");
+          setError("This account uses Google sign-in.");
           return;
         }
 
@@ -79,7 +76,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
           });
 
           if (sendResult.error) {
-            setError(sendResult.error.message || "We could not send a verification code. Try again in a moment.");
+            setError(sendResult.error.message || "We could not send a verification code.");
             return;
           }
 
@@ -90,19 +87,19 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
         const result = await authClient.signIn.email({ email: normalizedEmail, password });
 
         if (result.error) {
-          setError(result.error.message || "The password is incorrect. Try again.");
+          setError(result.error.message || "The password is incorrect.");
           return;
         }
 
         if (!result.data?.user) {
-          setError("Sign-in did not create a session. Check your details and try again.");
+          setError("We could not start your session. Try again.");
           return;
         }
 
         const session = await authClient.getSession();
 
         if (!session.data?.session || session.data.user?.email.toLowerCase() !== normalizedEmail) {
-          setError("Sign-in did not create a session. Check your details and try again.");
+          setError("We could not start your session. Try again.");
           return;
         }
 
@@ -112,7 +109,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
       }
 
       if (account.exists) {
-        setError("An account already exists for this email. Sign in instead.");
+        setError("An account already exists for this email.");
         return;
       }
 
@@ -123,7 +120,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
       });
 
       if (result.error) {
-        setError(result.error.message || "Account creation failed. Check your details and try again.");
+        setError(result.error.message || "We could not create your account.");
         return;
       }
 
@@ -140,7 +137,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
       const session = await authClient.getSession();
 
       if (!session.data?.session || session.data.user?.email.toLowerCase() !== normalizedEmail) {
-        setError("Your account exists, but a secure session was not created. Sign in to continue.");
+        setError("Your account was created. Sign in to continue.");
         return;
       }
 
@@ -162,7 +159,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
       const result = await authClient.signIn.social({ provider: "google", callbackURL: nextPath });
 
       if (result.error) {
-        setError(result.error.message || "Google sign-in is not available yet.");
+        setError(result.error.message || "Google sign-in is unavailable.");
       }
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : "Google sign-in failed. Try again.");
@@ -172,39 +169,38 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
   }
 
   const footer = (
-    <p className="mt-3 border-t border-border/70 pt-3 text-xs leading-5 text-muted-foreground lg:mt-5 lg:pt-4">
-      {isSignIn ? "New to ideator.dev?" : "Already have an account?"}{" "}
-      <Link
-        href={alternateHref}
-        className="cursor-pointer font-semibold text-foreground underline decoration-primary/70 underline-offset-4 transition-colors duration-200 ease-spring hover:text-primary"
-      >
-        {isSignIn ? "Create an account" : "Sign in"}
+    <p className="auth-footer mt-3 flex min-h-11 items-center justify-center gap-1 text-sm text-muted-foreground">
+      {isSignIn ? "Need an account?" : "Have an account?"}
+      <Link href={alternateHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
+        {isSignIn ? "Register" : "Sign in"}
       </Link>
     </p>
   );
 
   return (
     <AuthShell
-      eyebrow={isSignIn ? "returning builder" : "new builder"}
-      title={isSignIn ? "Welcome back." : "Create your account."}
-      step={isSignIn ? "01" : "02"}
-      description={isSignIn ? "Use the verified email attached to your account." : "One rough thought is enough to begin. You can shape the rest inside."}
+      title={isSignIn ? "Sign in" : "Create account"}
+      description={isSignIn ? "Use your account email and password." : "Create an account to save and revisit your work."}
       footer={footer}
     >
       {verifiedNotice && (
-        <p className="mt-4 border-l-2 border-accent bg-accent/10 px-4 py-3 text-xs leading-5 text-accent" role="status">
-          Email verified. Sign in to continue.
+        <p className="auth-message mb-3 rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm text-accent" role="status">
+          Email verified. You can sign in now.
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-4 space-y-3 lg:mt-7 lg:space-y-5" aria-busy={pending}>
+      <form
+        onSubmit={handleSubmit}
+        className={`auth-form grid gap-3 ${isSignIn ? "" : "auth-form-signup"}`}
+        aria-busy={pending}
+      >
         {!isSignIn && (
-          <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
+          <div>
             <div className="flex items-baseline justify-between gap-4">
-              <label htmlFor="name" className={`${fieldLabelClass} text-muted-foreground`}>
+              <label htmlFor="name" className={fieldLabelClass}>
                 Name
               </label>
-              <span className="text-[0.68rem] text-muted-foreground/80">optional</span>
+              <span className="text-xs text-muted-foreground">Optional</span>
             </div>
             <input
               id="name"
@@ -212,13 +208,13 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
               onChange={(event) => setName(event.target.value)}
               autoComplete="name"
               className={inputClass}
-              placeholder="How should we greet you?"
+              placeholder="Your name"
             />
           </div>
         )}
 
-        <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
-          <label htmlFor="email" className={`${fieldLabelClass} block text-muted-foreground`}>
+        <div>
+          <label htmlFor="email" className={fieldLabelClass}>
             Email
           </label>
           <input
@@ -233,8 +229,8 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
           />
         </div>
 
-        <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
-          <label htmlFor="password" className={`${fieldLabelClass} block text-muted-foreground`}>
+        <div>
+          <label htmlFor="password" className={fieldLabelClass}>
             Password
           </label>
           <div className="relative">
@@ -247,12 +243,12 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
               onChange={(event) => setPassword(event.target.value)}
               autoComplete={isSignIn ? "current-password" : "new-password"}
               className={`${inputClass} pr-12`}
-              placeholder="At least 8 characters"
+              placeholder="8 characters minimum"
             />
             <button
               type="button"
               onClick={() => setShowPassword((visible) => !visible)}
-              className="absolute right-0 top-1/2 inline-flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors duration-180 ease-spring hover:bg-secondary/50 hover:text-foreground focus-visible:bg-secondary/50"
+              className="absolute right-1 top-1/2 inline-flex size-10 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary/50 hover:text-foreground focus-visible:bg-secondary/50"
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
             >
@@ -261,39 +257,27 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
           </div>
         </div>
 
-        <AnimatePresence initial={false}>
-          {error && (
-            <motion.div
-              key={error}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ type: "tween", duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="border-l-2 border-destructive bg-destructive/10 px-4 py-3 text-xs leading-5 text-destructive"
-              role="alert"
-              aria-live="polite"
-            >
-              <p>{error}</p>
-              {suggestRegistration && (
-                <Link href={alternateHref} className="mt-2 inline-flex font-semibold underline underline-offset-4 hover:text-foreground">
-                  Register this email
-                </Link>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {error && (
+          <div className="auth-message rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive" role="alert" aria-live="polite">
+            <span>{error}</span>{" "}
+            {suggestRegistration && (
+              <Link href={alternateHref} className="font-semibold underline underline-offset-4 hover:text-foreground">
+                Register instead.
+              </Link>
+            )}
+          </div>
+        )}
 
         <button
           type="submit"
           disabled={pending}
-          className="button-lift inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors duration-180 ease-spring hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60 lg:min-h-14"
+          className="auth-button inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
         >
-          {pending ? (isSignIn ? "Checking account..." : "Creating account...") : isSignIn ? "Sign in" : "Create account"}
-          {!pending && <ArrowRight className="size-4" aria-hidden="true" />}
+          {pending ? (isSignIn ? "Checking..." : "Creating account...") : isSignIn ? "Sign in" : "Create account"}
         </button>
       </form>
 
-      <div className={`my-3 flex items-center gap-4 ${microLabelClass} text-muted-foreground lg:my-4`}>
+      <div className="auth-divider my-3 flex items-center gap-3 text-xs text-muted-foreground" aria-hidden="true">
         <span className="h-px flex-1 bg-border" />
         <span>or</span>
         <span className="h-px flex-1 bg-border" />
@@ -303,10 +287,10 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
         type="button"
         onClick={handleGoogle}
         disabled={pending}
-        className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border border-border bg-transparent px-5 text-sm font-medium text-foreground transition-colors duration-180 ease-spring hover:border-foreground/40 hover:bg-white/[0.04] disabled:cursor-wait disabled:opacity-60 lg:min-h-14"
+        className="auth-button inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-md border border-input bg-card/30 px-5 text-sm font-semibold text-foreground hover:border-foreground/40 hover:bg-card/60 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
       >
         <FcGoogle className="size-5" aria-hidden="true" />
-        Continue with Google
+        {isSignIn ? "Sign in with Google" : "Sign up with Google"}
       </button>
     </AuthShell>
   );

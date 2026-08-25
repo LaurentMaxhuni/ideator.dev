@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, MailCheck, RotateCw } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { RotateCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
@@ -11,8 +10,8 @@ import { getAccountStatus } from "@/lib/auth/account-status";
 import { authClient } from "@/lib/auth/client";
 
 const inputClass =
-  "mt-1 min-h-12 w-full border-0 bg-transparent px-0 py-2 text-base text-foreground outline-none transition-colors duration-200 ease-spring placeholder:text-muted-foreground/50 lg:text-[1.05rem]";
-const fieldLabelClass = "text-xs font-semibold uppercase tracking-[0.1em]";
+  "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
+const fieldLabelClass = "auth-field-label text-sm font-medium text-foreground/85";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
@@ -21,7 +20,6 @@ function safeNextPath(value: string | null) {
 export function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const reduceMotion = useReducedMotion();
   const [email, setEmail] = useState(searchParams.get("email")?.trim().toLowerCase() ?? "");
   const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
@@ -44,7 +42,7 @@ export function VerifyEmailForm() {
       const account = await getAccountStatus(normalizedEmail);
 
       if (!account.exists) {
-        setError("No account exists for this email. Register before requesting a verification code.");
+        setError("No account found. Register before requesting a code.");
         return;
       }
 
@@ -56,7 +54,7 @@ export function VerifyEmailForm() {
       const result = await authClient.emailOtp.verifyEmail({ email: normalizedEmail, otp: code });
 
       if (result.error) {
-        setError(result.error.message || "That code is invalid or expired. Request a new code and try again.");
+        setError(result.error.message || "That code is invalid or expired.");
         return;
       }
 
@@ -87,12 +85,12 @@ export function VerifyEmailForm() {
       const account = await getAccountStatus(normalizedEmail);
 
       if (!account.exists) {
-        setError("No account exists for this email. Register before requesting a verification code.");
+        setError("No account found. Register before requesting a code.");
         return;
       }
 
       if (account.emailVerified) {
-        setNotice("This email is already verified. You can sign in now.");
+        setNotice("This email is already verified.");
         return;
       }
 
@@ -102,45 +100,38 @@ export function VerifyEmailForm() {
       });
 
       if (result.error) {
-        setError(result.error.message || "We could not send a new code. Try again in a moment.");
+        setError(result.error.message || "We could not send a new code.");
         return;
       }
 
-      setNotice("A new verification code is on its way. It expires in 15 minutes.");
+      setNotice("New code sent. It expires in 15 minutes.");
     } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "We could not send a new code. Try again.");
+      setError(authError instanceof Error ? authError.message : "We could not send a new code.");
     } finally {
       setResending(false);
     }
   }
 
   const footer = (
-    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4 text-xs text-muted-foreground lg:mt-5">
-      <Link href={loginHref} className="inline-flex min-h-10 items-center gap-2 font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
-        <ArrowLeft className="size-3.5" aria-hidden="true" /> Sign in
+    <div className="auth-footer mt-3 flex min-h-11 items-center justify-between gap-3 text-sm text-muted-foreground">
+      <Link href={loginHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
+        Back to sign in
       </Link>
-      <Link href={signupHref} className="inline-flex min-h-10 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
-        Register instead
+      <Link href={signupHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
+        Create account
       </Link>
     </div>
   );
 
   return (
     <AuthShell
-      eyebrow="email verification"
-      title="Check your inbox."
-      step="03"
-      description="Enter the verification code sent to your email. Codes expire after 15 minutes."
+      title="Verify your email"
+      description="Enter the six-digit code we sent to your email. Codes expire after 15 minutes."
       footer={footer}
     >
-      <div className="mt-5 flex items-start gap-3 border border-border bg-card/45 px-4 py-3 text-sm leading-6 text-muted-foreground lg:mt-6">
-        <MailCheck className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden="true" />
-        <p>Verification keeps private workspaces tied to an email you control.</p>
-      </div>
-
-      <form onSubmit={handleVerify} className="mt-5 space-y-5 lg:mt-6 lg:space-y-5" aria-busy={pending}>
-        <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
-          <label htmlFor="verification-email" className={`${fieldLabelClass} block text-muted-foreground`}>
+      <form onSubmit={handleVerify} className="auth-form grid gap-3" aria-busy={pending}>
+        <div>
+          <label htmlFor="verification-email" className={fieldLabelClass}>
             Email
           </label>
           <input
@@ -155,8 +146,8 @@ export function VerifyEmailForm() {
           />
         </div>
 
-        <div className="border-b border-border pb-1 transition-colors duration-200 ease-spring focus-within:border-primary">
-          <label htmlFor="verification-code" className={`${fieldLabelClass} block text-muted-foreground`}>
+        <div>
+          <label htmlFor="verification-code" className={fieldLabelClass}>
             Verification code
           </label>
           <input
@@ -169,51 +160,40 @@ export function VerifyEmailForm() {
             onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             minLength={6}
             maxLength={6}
-            className={`${inputClass} font-mono text-2xl tracking-[0.32em] tabular-nums sm:text-3xl`}
+            className={`${inputClass} font-mono text-xl tracking-[0.2em] tabular-nums`}
             placeholder="000000"
-            aria-describedby="verification-code-help"
           />
-          <p id="verification-code-help" className="pb-2 text-xs leading-5 text-muted-foreground">
-            Enter the six-digit code exactly as shown in the email.
-          </p>
         </div>
 
-        <AnimatePresence initial={false}>
-          {(error || notice) && (
-            <motion.p
-              key={error || notice}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ type: "tween", duration: reduceMotion ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className={`border-l-2 px-4 py-3 text-xs leading-5 ${error ? "border-destructive bg-destructive/10 text-destructive" : "border-accent bg-accent/10 text-accent"}`}
-              role={error ? "alert" : "status"}
-              aria-live="polite"
-            >
-              {error || notice}
-            </motion.p>
-          )}
-        </AnimatePresence>
+        {(error || notice) && (
+          <p
+            className={`auth-message rounded-md border px-3 py-2 text-sm leading-5 ${error ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-accent/40 bg-accent/10 text-accent"}`}
+            role={error ? "alert" : "status"}
+            aria-live="polite"
+          >
+            {error || notice}
+          </p>
+        )}
 
-        <button
-          type="submit"
-          disabled={pending || resending || code.length !== 6}
-          className="button-lift inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors duration-180 ease-spring hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 lg:min-h-14"
-        >
-          {pending ? "Verifying..." : "Verify email"}
-          {!pending && <ArrowRight className="size-4" aria-hidden="true" />}
-        </button>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+          <button
+            type="submit"
+            disabled={pending || resending || code.length !== 6}
+            className="auth-button inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {pending ? "Verifying..." : "Verify email"}
+          </button>
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={pending || resending || !email.trim()}
+            className="auth-button inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-input bg-card/30 px-4 text-sm font-semibold text-foreground hover:border-foreground/40 hover:bg-card/60 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RotateCw className={`size-4 ${resending ? "animate-spin" : ""}`} aria-hidden="true" />
+            {resending ? "Sending..." : "Resend"}
+          </button>
+        </div>
       </form>
-
-      <button
-        type="button"
-        onClick={handleResend}
-        disabled={pending || resending || !email.trim()}
-        className="mt-3 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-md border border-border bg-transparent px-5 text-sm font-medium text-foreground transition-colors duration-180 ease-spring hover:border-foreground/40 hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        <RotateCw className={`size-4 ${resending ? "animate-spin" : ""}`} aria-hidden="true" />
-        {resending ? "Sending a new code..." : "Resend code"}
-      </button>
     </AuthShell>
   );
 }
