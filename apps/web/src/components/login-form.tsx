@@ -195,7 +195,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
         aria-busy={pending}
       >
         {!isSignIn && (
-          <div>
+          <div className="auth-form-field">
             <div className="flex items-baseline justify-between gap-4">
               <label htmlFor="name" className={fieldLabelClass}>
                 Name
@@ -213,7 +213,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
           </div>
         )}
 
-        <div>
+        <div className="auth-form-field">
           <label htmlFor="email" className={fieldLabelClass}>
             Email
           </label>
@@ -229,7 +229,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
           />
         </div>
 
-        <div>
+        <div className="auth-form-field">
           <label htmlFor="password" className={fieldLabelClass}>
             Password
           </label>

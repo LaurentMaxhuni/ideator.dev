@@ -130,7 +130,7 @@ export function VerifyEmailForm() {
       footer={footer}
     >
       <form onSubmit={handleVerify} className="auth-form grid gap-3" aria-busy={pending}>
-        <div>
+        <div className="auth-form-field">
           <label htmlFor="verification-email" className={fieldLabelClass}>
             Email
           </label>
@@ -146,7 +146,7 @@ export function VerifyEmailForm() {
           />
         </div>
 
-        <div>
+        <div className="auth-form-field">
           <label htmlFor="verification-code" className={fieldLabelClass}>
             Verification code
           </label>
@@ -175,7 +175,7 @@ export function VerifyEmailForm() {
           </p>
         )}
 
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+        <div className="auth-form-actions grid grid-cols-[minmax(0,1fr)_auto] gap-2">
           <button
             type="submit"
             disabled={pending || resending || code.length !== 6}
