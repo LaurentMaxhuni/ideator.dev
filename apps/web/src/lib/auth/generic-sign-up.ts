@@ -5,14 +5,24 @@ const responseHeaders = {
   "Content-Type": "application/json",
 };
 
+function unavailable() {
+  return Response.json(
+    { error: "Authentication is temporarily unavailable." },
+    { status: 503, headers: responseHeaders },
+  );
+}
+
 export async function handleGenericSignUp(request: Request, forward: SignUpForwarder) {
+  let upstream: Response;
+
   try {
-    await forward(request);
+    upstream = await forward(request);
   } catch {
-    return Response.json(
-      { error: "Authentication is temporarily unavailable." },
-      { status: 503, headers: responseHeaders },
-    );
+    return unavailable();
+  }
+
+  if (upstream.status >= 500) {
+    return unavailable();
   }
 
   return Response.json({ accepted: true }, { status: 202, headers: responseHeaders });

@@ -261,6 +261,11 @@
   min-width: 0;
 }
 
+.auth-layout {
+  scrollbar-gutter: stable;
+  scroll-padding-block: 1rem;
+}
+
 @media (max-height: 43.75rem) {
   .auth-header {
     height: 3.25rem !important;

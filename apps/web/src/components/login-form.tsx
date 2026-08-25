@@ -8,6 +8,7 @@ import { useState, type FormEvent } from "react";
 
 import { AuthShell } from "@/components/auth-shell";
 import { authClient } from "@/lib/auth/client";
+import { emailsMatch } from "@/lib/auth/email";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -70,7 +71,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
 
         const session = await authClient.getSession();
 
-        if (!session.data?.session || session.data.user?.email.toLowerCase() !== normalizedEmail) {
+        if (!session.data?.session || !emailsMatch(session.data.user?.email, normalizedEmail)) {
           setError(SIGN_IN_FAILURE);
           return;
         }
@@ -103,7 +104,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
 
       const session = await authClient.getSession();
 
-      if (!session.data?.session || session.data.user?.email.toLowerCase() !== normalizedEmail) {
+      if (!session.data?.session || !emailsMatch(session.data.user?.email, normalizedEmail)) {
         setError("Your account was created. Sign in to continue.");
         return;
       }

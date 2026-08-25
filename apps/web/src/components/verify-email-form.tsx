@@ -7,6 +7,7 @@ import { useState, type FormEvent } from "react";
 
 import { AuthShell } from "@/components/auth-shell";
 import { authClient } from "@/lib/auth/client";
+import { emailsMatch } from "@/lib/auth/email";
 
 const inputClass =
   "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
@@ -48,7 +49,7 @@ export function VerifyEmailForm() {
 
       const session = await authClient.getSession();
 
-      if (session.data?.session && session.data.user) {
+      if (session.data?.session && emailsMatch(session.data.user?.email, normalizedEmail)) {
         router.replace(nextPath);
         router.refresh();
         return;
