@@ -15,8 +15,13 @@ type AuthShellProps = {
 
 export function AuthShell({ children, description, footer, title }: AuthShellProps) {
   return (
-    <main className="auth-screen non-landing-ui h-dvh max-h-dvh overflow-hidden bg-background text-foreground">
-      <div className="auth-frame mx-auto grid h-full max-w-[1120px] grid-rows-[auto_minmax(0,1fr)] px-5 sm:px-8 lg:px-12">
+    <main className="auth-screen non-landing-ui relative isolate h-dvh max-h-dvh overflow-hidden bg-background text-foreground">
+      <div
+        className="auth-pattern pointer-events-none absolute inset-y-0 left-0 hidden w-[44%] border-r border-border bg-[url('/pattern.svg')] bg-[length:60px_60px] bg-repeat md:block lg:w-1/2"
+        aria-hidden="true"
+      />
+
+      <div className="auth-frame relative z-10 mx-auto grid h-full max-w-[1120px] grid-rows-[auto_minmax(0,1fr)] px-5 sm:px-8 lg:px-12">
         <header className="auth-header flex h-16 items-center justify-between border-b border-border/70">
           <BrandMark href="/" dotClassName="!bg-primary !bg-none !shadow-none" className="text-[1.15rem]" />
           <Link
