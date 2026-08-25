@@ -57,8 +57,11 @@ test("registration returns the same public response for new and existing account
   assert.equal(accepted.headers.get("Cache-Control"), "no-store");
 });
 
-test("registration returns a generic operational failure for upstream 5xx responses", async () => {
+test("registration returns a generic operational failure for rate-limited and upstream 5xx responses", async () => {
   const request = new Request("http://localhost/api/auth/sign-up/email", { method: "POST" });
+  const rateLimited = await handleGenericSignUp(request.clone(), async () =>
+    Response.json({ error: "too many signup attempts" }, { status: 429 }),
+  );
   const upstream500 = await handleGenericSignUp(request.clone(), async () =>
     Response.json({ error: "upstream database timeout" }, { status: 500 }),
   );
@@ -69,16 +72,20 @@ test("registration returns a generic operational failure for upstream 5xx respon
     throw new Error("connection refused");
   });
 
+  assert.equal(rateLimited.status, 503);
   assert.equal(upstream500.status, 503);
   assert.equal(upstream503.status, 503);
   assert.equal(thrown.status, 503);
-  const [upstream500Body, upstream503Body, thrownBody] = await Promise.all([
+  const [rateLimitedBody, upstream500Body, upstream503Body, thrownBody] = await Promise.all([
+    rateLimited.text(),
     upstream500.text(),
     upstream503.text(),
     thrown.text(),
   ]);
+  assert.equal(rateLimitedBody, upstream500Body);
   assert.equal(upstream500Body, upstream503Body);
   assert.equal(upstream503Body, thrownBody);
+  assert.equal(rateLimited.headers.get("Cache-Control"), "no-store");
   assert.equal(upstream500.headers.get("Cache-Control"), "no-store");
 });
 

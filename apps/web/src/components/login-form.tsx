@@ -20,7 +20,7 @@ const inputClass =
   "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
 const fieldLabelClass = "auth-field-label text-sm font-medium text-foreground/85";
 const SIGN_IN_FAILURE = "We could not sign you in. Check your details and try again.";
-const SIGN_UP_FAILURE = "We could not create your account. Try again.";
+const SIGN_UP_FAILURE = "We could not create your account right now. Please try again later.";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";

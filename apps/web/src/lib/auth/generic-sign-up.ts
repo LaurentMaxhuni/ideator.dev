@@ -21,7 +21,7 @@ export async function handleGenericSignUp(request: Request, forward: SignUpForwa
     return unavailable();
   }
 
-  if (upstream.status >= 500) {
+  if (upstream.status === 429 || upstream.status >= 500) {
     return unavailable();
   }
 
