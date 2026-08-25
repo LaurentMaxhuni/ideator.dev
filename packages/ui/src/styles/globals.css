@@ -245,3 +245,13 @@
     transition-timing-function: var(--motion-ease-ui) !important;
   }
 }
+
+/* Keep the first auth action in view on short desktop and landscape screens.
+   The document remains scrollable when the full form needs more room. */
+@media (min-width: 64rem) and (max-height: 50rem) {
+  .auth-shell-content {
+    align-items: flex-start !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 2rem !important;
+  }
+}
