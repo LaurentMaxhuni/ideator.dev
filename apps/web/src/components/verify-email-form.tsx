@@ -6,12 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { AuthShell } from "@/components/auth-shell";
-import { getAccountStatus } from "@/lib/auth/account-status";
 import { authClient } from "@/lib/auth/client";
 
 const inputClass =
   "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
 const fieldLabelClass = "auth-field-label text-sm font-medium text-foreground/85";
+const RESEND_NOTICE = "If an account can be verified, a new code will be sent.";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
@@ -39,22 +39,10 @@ export function VerifyEmailForm() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const account = await getAccountStatus(normalizedEmail);
-
-      if (!account.exists) {
-        setError("No account found. Register before requesting a code.");
-        return;
-      }
-
-      if (account.emailVerified) {
-        router.replace(`/login?${new URLSearchParams({ verified: "1", email: normalizedEmail, next: nextPath }).toString()}`);
-        return;
-      }
-
       const result = await authClient.emailOtp.verifyEmail({ email: normalizedEmail, otp: code });
 
       if (result.error) {
-        setError(result.error.message || "That code is invalid or expired.");
+        setError("We could not verify that code. Check it and try again.");
         return;
       }
 
@@ -67,8 +55,8 @@ export function VerifyEmailForm() {
       }
 
       router.replace(`/login?${new URLSearchParams({ verified: "1", email: normalizedEmail, next: nextPath }).toString()}`);
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Email verification failed. Try again.");
+    } catch {
+      setError("We could not verify that code. Check it and try again.");
     } finally {
       setPending(false);
     }
@@ -82,31 +70,13 @@ export function VerifyEmailForm() {
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const account = await getAccountStatus(normalizedEmail);
-
-      if (!account.exists) {
-        setError("No account found. Register before requesting a code.");
-        return;
-      }
-
-      if (account.emailVerified) {
-        setNotice("This email is already verified.");
-        return;
-      }
-
-      const result = await authClient.emailOtp.sendVerificationOtp({
+      await authClient.emailOtp.sendVerificationOtp({
         email: normalizedEmail,
         type: "email-verification",
       });
-
-      if (result.error) {
-        setError(result.error.message || "We could not send a new code.");
-        return;
-      }
-
-      setNotice("New code sent. It expires in 15 minutes.");
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "We could not send a new code.");
+      setNotice(RESEND_NOTICE);
+    } catch {
+      setNotice(RESEND_NOTICE);
     } finally {
       setResending(false);
     }

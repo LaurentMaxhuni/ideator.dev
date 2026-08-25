@@ -33,15 +33,15 @@ export function AuthShell({ children, description, footer, title }: AuthShellPro
           </Link>
         </header>
 
-        <div className="auth-layout grid min-h-0 content-center gap-5 py-4 md:grid-cols-[minmax(200px,0.72fr)_minmax(0,1fr)] md:items-center md:gap-12 lg:gap-16">
-          <section className="auth-intro md:max-w-[320px]" aria-labelledby="auth-title">
-            <h1 id="auth-title" className="auth-title text-[clamp(1.9rem,4vw,3.25rem)] font-semibold leading-[1.02] tracking-[-0.03em]">
-              {title}
-            </h1>
-            <p className="auth-description mt-2 max-w-[42ch] text-sm leading-6 text-muted-foreground">{description}</p>
-          </section>
+        <div className="auth-layout flex min-h-0 items-center justify-center py-4 md:justify-end">
+          <section className="auth-panel w-full max-w-[460px] md:w-[48%]">
+            <header className="auth-intro mb-5" aria-labelledby="auth-title">
+              <h1 id="auth-title" className="auth-title text-[clamp(1.9rem,4vw,3.25rem)] font-semibold leading-[1.02] tracking-[-0.03em]">
+                {title}
+              </h1>
+              <p className="auth-description mt-2 max-w-[42ch] text-sm leading-6 text-muted-foreground">{description}</p>
+            </header>
 
-          <section className="auth-panel w-full max-w-[460px] md:justify-self-end">
             {children}
             {footer}
           </section>

@@ -7,7 +7,6 @@ import { FcGoogle } from "react-icons/fc";
 import { useState, type FormEvent } from "react";
 
 import { AuthShell } from "@/components/auth-shell";
-import { getAccountStatus } from "@/lib/auth/account-status";
 import { authClient } from "@/lib/auth/client";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -19,6 +18,8 @@ type LoginFormProps = {
 const inputClass =
   "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
 const fieldLabelClass = "auth-field-label text-sm font-medium text-foreground/85";
+const SIGN_IN_FAILURE = "We could not sign you in. Check your details and try again.";
+const SIGN_UP_FAILURE = "We could not create your account. Try again.";
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
@@ -38,78 +39,44 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
-  const [suggestRegistration, setSuggestRegistration] = useState(false);
 
   const nextPath = safeNextPath(searchParams.get("next"));
   const query = new URLSearchParams({ next: nextPath });
   if (email.trim()) query.set("email", email.trim().toLowerCase());
   const alternateHref = `${isSignIn ? "/signup" : "/login"}?${query.toString()}`;
+  const verifyHref = verificationHref(email.trim().toLowerCase(), nextPath);
   const verifiedNotice = isSignIn && searchParams.get("verified") === "1";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setSuggestRegistration(false);
     setPending(true);
 
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      const account = await getAccountStatus(normalizedEmail);
-
       if (isSignIn) {
-        if (!account.exists) {
-          setSuggestRegistration(true);
-          setError("No account found for this email.");
-          return;
-        }
-
-        if (!account.hasPassword) {
-          setError("This account uses Google sign-in.");
-          return;
-        }
-
-        if (!account.emailVerified) {
-          const sendResult = await authClient.emailOtp.sendVerificationOtp({
-            email: normalizedEmail,
-            type: "email-verification",
-          });
-
-          if (sendResult.error) {
-            setError(sendResult.error.message || "We could not send a verification code.");
-            return;
-          }
-
-          router.push(verificationHref(normalizedEmail, nextPath));
-          return;
-        }
-
         const result = await authClient.signIn.email({ email: normalizedEmail, password });
 
         if (result.error) {
-          setError(result.error.message || "The password is incorrect.");
+          setError(SIGN_IN_FAILURE);
           return;
         }
 
         if (!result.data?.user) {
-          setError("We could not start your session. Try again.");
+          setError(SIGN_IN_FAILURE);
           return;
         }
 
         const session = await authClient.getSession();
 
         if (!session.data?.session || session.data.user?.email.toLowerCase() !== normalizedEmail) {
-          setError("We could not start your session. Try again.");
+          setError(SIGN_IN_FAILURE);
           return;
         }
 
         router.replace(nextPath);
         router.refresh();
-        return;
-      }
-
-      if (account.exists) {
-        setError("An account already exists for this email.");
         return;
       }
 
@@ -120,7 +87,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
       });
 
       if (result.error) {
-        setError(result.error.message || "We could not create your account.");
+        setError(SIGN_UP_FAILURE);
         return;
       }
 
@@ -143,8 +110,8 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
 
       router.replace(nextPath);
       router.refresh();
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Authentication failed. Try again.");
+    } catch {
+      setError(isSignIn ? SIGN_IN_FAILURE : SIGN_UP_FAILURE);
     } finally {
       setPending(false);
     }
@@ -152,29 +119,35 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
 
   async function handleGoogle() {
     setError("");
-    setSuggestRegistration(false);
     setPending(true);
 
     try {
       const result = await authClient.signIn.social({ provider: "google", callbackURL: nextPath });
 
       if (result.error) {
-        setError(result.error.message || "Google sign-in is unavailable.");
+        setError("Google sign-in is unavailable. Try again.");
       }
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Google sign-in failed. Try again.");
+    } catch {
+      setError("Google sign-in is unavailable. Try again.");
     } finally {
       setPending(false);
     }
   }
 
   const footer = (
-    <p className="auth-footer mt-3 flex min-h-11 items-center justify-center gap-1 text-sm text-muted-foreground">
-      {isSignIn ? "Need an account?" : "Have an account?"}
-      <Link href={alternateHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
-        {isSignIn ? "Register" : "Sign in"}
-      </Link>
-    </p>
+    <div className={`auth-footer mt-3 flex min-h-11 items-center gap-3 text-sm text-muted-foreground ${isSignIn ? "justify-between" : "justify-center"}`}>
+      <p className="flex items-center gap-1">
+        {isSignIn ? "Need an account?" : "Have an account?"}
+        <Link href={alternateHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
+          {isSignIn ? "Register" : "Sign in"}
+        </Link>
+      </p>
+      {isSignIn && (
+        <Link href={verifyHref} className="inline-flex min-h-11 items-center font-semibold text-foreground underline decoration-primary/70 underline-offset-4 hover:text-primary">
+          Verify email
+        </Link>
+      )}
+    </div>
   );
 
   return (
@@ -229,7 +202,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
           />
         </div>
 
-        <div className="auth-form-field">
+        <div className="auth-form-field auth-form-field-password">
           <label htmlFor="password" className={fieldLabelClass}>
             Password
           </label>
@@ -259,12 +232,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
 
         {error && (
           <div className="auth-message rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive" role="alert" aria-live="polite">
-            <span>{error}</span>{" "}
-            {suggestRegistration && (
-              <Link href={alternateHref} className="font-semibold underline underline-offset-4 hover:text-foreground">
-                Register instead.
-              </Link>
-            )}
+            {error}
           </div>
         )}
 
@@ -273,7 +241,7 @@ export function LoginForm({ initialMode = "sign-in" }: LoginFormProps) {
           disabled={pending}
           className="auth-button inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 active:scale-[0.99] disabled:cursor-wait disabled:opacity-60"
         >
-          {pending ? (isSignIn ? "Checking..." : "Creating account...") : isSignIn ? "Sign in" : "Create account"}
+          {pending ? (isSignIn ? "Signing in..." : "Creating account...") : isSignIn ? "Sign in" : "Create account"}
         </button>
       </form>
 

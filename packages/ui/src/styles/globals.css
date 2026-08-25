@@ -281,6 +281,10 @@
     line-height: 1.25rem !important;
   }
 
+  .auth-intro {
+    margin-bottom: 0.75rem !important;
+  }
+
   .auth-form {
     gap: 0.5rem !important;
   }
@@ -317,6 +321,10 @@
     display: none;
   }
 
+  .auth-intro {
+    margin-bottom: 0.5rem !important;
+  }
+
   .auth-form {
     gap: 0.25rem !important;
   }
@@ -341,25 +349,12 @@
 
 @media (min-width: 30rem) and (max-height: 35rem) {
   .auth-layout {
-    position: relative;
-    display: block;
-    align-content: start;
+    align-items: flex-start;
     padding-block: 0.25rem !important;
   }
 
   .auth-intro {
-    position: absolute;
-    top: -2.75rem;
-    left: 50%;
-    width: auto;
-    transform: translateX(-50%);
-    white-space: nowrap;
-  }
-
-  .auth-title {
-    font-size: 0.875rem !important;
-    line-height: 2.75rem !important;
-    letter-spacing: -0.01em !important;
+    margin-bottom: 0.375rem !important;
   }
 
   .auth-panel {
@@ -393,22 +388,13 @@
 }
 
 @media (max-width: 29.999rem) and (max-height: 31rem) {
-  .auth-layout {
-    position: relative;
-  }
-
   .auth-intro {
-    position: absolute;
-    top: -2.75rem;
-    left: 50%;
-    width: auto;
-    transform: translateX(-50%);
-    white-space: nowrap;
+    margin-bottom: 0.375rem !important;
   }
 
   .auth-title {
-    font-size: 0.875rem !important;
-    line-height: 2.75rem !important;
+    font-size: 1.35rem !important;
+    line-height: 1.1 !important;
     letter-spacing: -0.01em !important;
   }
 }
@@ -416,6 +402,14 @@
 @media (max-width: 29.999rem) and (max-height: 26rem) {
   .auth-form {
     gap: 0.125rem !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .auth-form-signup > .auth-form-field-password,
+  .auth-form > .auth-message,
+  .auth-form > .auth-form-actions,
+  .auth-form > .auth-button {
+    grid-column: 1 / -1;
   }
 
   .auth-input,
