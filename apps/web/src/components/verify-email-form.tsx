@@ -3,7 +3,7 @@
 import { RotateCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { AuthShell } from "@/components/auth-shell";
 import { authClient } from "@/lib/auth/client";
@@ -13,6 +13,7 @@ const inputClass =
   "auth-input mt-1 min-h-11 w-full rounded-md border border-input bg-card/40 px-3 text-base text-foreground outline-none transition-[border-color,background-color] duration-200 ease-spring placeholder:text-muted-foreground/60 hover:bg-card/60 focus:border-primary focus:bg-card/60";
 const fieldLabelClass = "auth-field-label text-sm font-medium text-foreground/85";
 const RESEND_NOTICE = "If an account can be verified, a new code will be sent.";
+const RESEND_COOLDOWN_SECONDS = 60;
 
 function safeNextPath(value: string | null) {
   return value?.startsWith("/") && !value.startsWith("//") ? value : "/app";
@@ -27,7 +28,17 @@ export function VerifyEmailForm() {
   const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [cooldown, setCooldown] = useState(0);
   const nextPath = safeNextPath(searchParams.get("next"));
+
+  useEffect(() => {
+    if (cooldown <= 0) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setCooldown((current) => current - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [cooldown]);
   const loginHref = `/login?${new URLSearchParams({ email, next: nextPath }).toString()}`;
   const signupHref = `/signup?${new URLSearchParams({ email, next: nextPath }).toString()}`;
 
@@ -64,6 +75,10 @@ export function VerifyEmailForm() {
   }
 
   async function handleResend() {
+    if (cooldown > 0) {
+      return;
+    }
+
     setError("");
     setNotice("");
     setResending(true);
@@ -76,8 +91,10 @@ export function VerifyEmailForm() {
         type: "email-verification",
       });
       setNotice(RESEND_NOTICE);
+      setCooldown(RESEND_COOLDOWN_SECONDS);
     } catch {
       setNotice(RESEND_NOTICE);
+      setCooldown(RESEND_COOLDOWN_SECONDS);
     } finally {
       setResending(false);
     }
@@ -97,7 +114,12 @@ export function VerifyEmailForm() {
   return (
     <AuthShell
       title="Verify your email"
-      description="Enter the six-digit code we sent to your email. Codes expire after 15 minutes."
+      description={(
+        <>
+          Check <span className="font-medium text-foreground">{email || "your inbox"}</span> for the six-digit code. Codes expire after 15 minutes.
+          <span className="mt-1 block">After verification, you&apos;ll continue to {nextPath === "/app/new" ? "your new brief" : "your workbench"}.</span>
+        </>
+      )}
       footer={footer}
     >
       <form onSubmit={handleVerify} className="auth-form grid gap-3" aria-busy={pending}>
@@ -114,7 +136,9 @@ export function VerifyEmailForm() {
             autoComplete="email"
             className={inputClass}
             placeholder="you@example.com"
+            aria-describedby="verification-email-hint"
           />
+          <p id="verification-email-hint" className="mt-1 text-xs leading-5 text-muted-foreground">Wrong address? Edit it here before requesting another code.</p>
         </div>
 
         <div className="auth-form-field">
@@ -157,11 +181,11 @@ export function VerifyEmailForm() {
           <button
             type="button"
             onClick={handleResend}
-            disabled={pending || resending || !email.trim()}
+            disabled={pending || resending || cooldown > 0 || !email.trim()}
             className="auth-button inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-input bg-card/30 px-4 text-sm font-semibold text-foreground hover:border-foreground/40 hover:bg-card/60 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RotateCw className={`size-4 ${resending ? "animate-spin" : ""}`} aria-hidden="true" />
-            {resending ? "Sending..." : "Resend"}
+            {resending ? "Sending..." : cooldown > 0 ? `Resend in ${cooldown}s` : "Resend"}
           </button>
         </div>
       </form>

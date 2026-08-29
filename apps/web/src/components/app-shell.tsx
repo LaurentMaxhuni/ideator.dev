@@ -3,6 +3,7 @@ import { ArrowUpRight, Plus } from "lucide-react";
 
 import { BrandMark } from "@/components/brand-mark";
 import { SignOutButton } from "@/components/sign-out-button";
+import { WorkspaceNav } from "@/components/workspace-nav";
 
 type ShellUser = {
   name?: string | null;
@@ -13,15 +14,12 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
   const displayName = user.name?.trim() || user.email?.split("@")[0] || "builder";
 
   return (
-    <div className="non-landing-ui cockpit-grid min-h-dvh text-white">
+    <div className="non-landing-ui cockpit-grid min-h-dvh text-foreground">
       <header className="relative z-10 border-b border-border bg-background">
         <div className="mx-auto flex min-h-[4.5rem] w-full max-w-[1440px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 md:gap-8">
             <BrandMark href="/app" tone="light" />
-            <nav className="hidden items-center gap-5 text-xs text-muted-foreground md:flex" aria-label="Workspace navigation">
-              <Link href="/app" className="cursor-pointer transition-[color,transform] duration-180 ease-spring hover:-translate-y-px hover:text-foreground">Projects</Link>
-              <Link href="/app/new" className="cursor-pointer transition-[color,transform] duration-180 ease-spring hover:-translate-y-px hover:text-foreground">New brief</Link>
-            </nav>
+            <WorkspaceNav />
           </div>
 
           <div className="flex items-center gap-3">
@@ -31,7 +29,7 @@ export function AppShell({ user, children }: { user: ShellUser; children: React.
             </div>
             <Link
               href="/app/new"
-              className="button-lift inline-flex min-h-10 items-center gap-2 rounded-md bg-primary px-3.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+              className="button-lift inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-3.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
             >
               <Plus className="size-3.5" aria-hidden="true" />
               New idea

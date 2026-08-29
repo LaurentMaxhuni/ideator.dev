@@ -117,7 +117,7 @@ function DirectionCard({
             </h3>
           </div>
         </div>
-        <span className={`shrink-0 rounded-sm border px-2 py-1 text-[0.6rem] uppercase tracking-[0.12em] ${original ? "border-border text-muted-foreground" : "border-primary/35 bg-primary/10 text-primary"}`}>
+        <span className={`shrink-0 rounded-sm border px-2 py-1 text-[0.65rem] uppercase tracking-[0.12em] ${original ? "border-border text-muted-foreground" : "border-primary/35 bg-primary/10 text-primary"}`}>
           {original ? "original" : meta?.label}
         </span>
       </div>
@@ -284,7 +284,7 @@ export function ExplorationClient({
         </Link>
         <div className="mt-9 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-end">
           <div>
-            <p className="eyebrow">idea playground / multiverse</p>
+            <p className="eyebrow">idea playground / compare directions</p>
             <h1 className="display-type mt-4 max-w-[850px] text-4xl font-normal leading-[0.98] text-foreground sm:text-6xl">
               Push {artifact.projectName} sideways.
             </h1>
@@ -489,7 +489,7 @@ export function ExplorationClient({
       ) : (
         <section className="panel-quiet rounded-xl px-6 py-14 text-center">
           <FlaskConical className="mx-auto size-6 text-accent" aria-hidden="true" />
-          <h2 className="display-type mt-5 text-2xl text-foreground">The multiverse is still folded.</h2>
+          <h2 className="display-type mt-5 text-2xl text-foreground">The directions are waiting.</h2>
           <p className="mx-auto mt-3 max-w-[500px] text-sm leading-6 text-muted-foreground">
             Pick up to two constraints—or none—then generate the first comparison.
           </p>

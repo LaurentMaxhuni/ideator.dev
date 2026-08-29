@@ -8,7 +8,7 @@ import { BrandMark } from "@/components/brand-mark";
 
 type AuthShellProps = {
   children: ReactNode;
-  description: string;
+  description: ReactNode;
   footer?: ReactNode;
   title: string;
 };
@@ -23,7 +23,7 @@ export function AuthShell({ children, description, footer, title }: AuthShellPro
 
       <div className="auth-frame relative z-10 mx-auto grid h-full max-w-[1120px] grid-rows-[auto_minmax(0,1fr)] px-5 sm:px-8 lg:px-12">
         <header className="auth-header flex h-16 items-center justify-between border-b border-border/70">
-          <BrandMark href="/" dotClassName="!bg-primary !bg-none !shadow-none" className="text-[1.15rem]" />
+          <BrandMark href="/" dotClassName="!bg-primary !bg-none !shadow-none" />
           <Link
             href="/"
             className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors duration-200 ease-spring hover:text-foreground"

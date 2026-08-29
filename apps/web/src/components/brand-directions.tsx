@@ -47,7 +47,7 @@ function LogoMark({
     return (
       <svg viewBox="0 0 96 96" className="size-full" role="img" aria-label="Cut initial logo sketch">
         <rect x="13" y="13" width="70" height="70" rx="22" fill={foreground} />
-        <text x="48" y="65" textAnchor="middle" fill={accent} fontSize="50" fontWeight="700" fontFamily="Arial, sans-serif">{initial}</text>
+        <text x="48" y="65" textAnchor="middle" fill={accent} fontSize="50" fontWeight="700" fontFamily="Outfit, sans-serif">{initial}</text>
         <path d="M17 68 L76 25" stroke={secondary} strokeWidth="9" strokeLinecap="round" />
       </svg>
     );
@@ -99,7 +99,7 @@ function DirectionPreview({
             <span className="block size-20">
               <LogoMark variant={direction.id} initial={projectInitial(projectName)} foreground={paper.value} accent={accent.value} secondary={secondary.value} />
             </span>
-            <span className="block text-right text-[0.58rem] uppercase tracking-[0.16em] opacity-60">logo study<br />not final art</span>
+            <span className="block text-right text-[0.65rem] uppercase tracking-[0.16em] opacity-60">logo study<br />not final art</span>
           </span>
           <span className="block">
             <span className="block max-w-[300px] text-xl leading-tight" style={{ fontFamily: direction.font.displayStack, fontWeight: 600 }}>{projectName}</span>
@@ -195,7 +195,7 @@ export function BrandDirections({ artifact, domain }: BrandDirectionsProps) {
                   <div className="h-12" style={{ backgroundColor: color.value }} />
                   <div className="px-2.5 py-2">
                     <p className="text-[0.65rem] font-medium text-foreground">{color.name}</p>
-                    <p className="mt-0.5 font-mono text-[0.6rem] uppercase text-muted-foreground">{color.value}</p>
+                    <p className="mt-0.5 font-mono text-[0.65rem] uppercase text-muted-foreground">{color.value}</p>
                   </div>
                 </div>
               ))}
@@ -210,7 +210,7 @@ export function BrandDirections({ artifact, domain }: BrandDirectionsProps) {
                 <p className="text-3xl leading-none" style={{ fontFamily: selected.font.displayStack, fontWeight: 600 }}>Shape the next move.</p>
                 <p className="mt-4 text-xs leading-5" style={{ fontFamily: selected.font.bodyStack }}>A useful identity should make the product feel clearer before it makes it feel bigger.</p>
               </div>
-              <div className="flex items-center justify-between gap-3 px-4 py-2 text-[0.6rem]" style={{ backgroundColor: accent.value }}>
+              <div className="flex items-center justify-between gap-3 px-4 py-2 text-[0.65rem]" style={{ backgroundColor: accent.value }}>
                 <span>{selected.font.display}</span>
                 <span>{selected.font.body}</span>
               </div>

@@ -57,7 +57,6 @@ export async function listProjectsForUser(userId: string) {
     .where(eq(projects.userId, userId))
     .orderBy(desc(projects.updatedAt));
 }
-
 export async function getProjectForUser(userId: string, projectId: string): Promise<ProjectWithArtifacts | null> {
   const db = requireDb();
   const projectRows = await db
@@ -500,4 +499,25 @@ export async function createForkAtomically(args: {
   }
 
   return child;
+}
+
+export async function renameProject(userId: string, projectId: string, title: string) {
+  const db = requireDb();
+  const updated = await db
+    .update(projects)
+    .set({ title, updatedAt: new Date() })
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .returning({ id: projects.id });
+
+  return updated.length > 0;
+}
+
+export async function deleteProject(userId: string, projectId: string) {
+  const db = requireDb();
+  const deleted = await db
+    .delete(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
+    .returning({ id: projects.id });
+
+  return deleted.length > 0;
 }

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-29T00:00:00Z",
+  "title": "Design System: ideator.dev",
+  "extensions": {
+    "colorMeta": {
+      "mooring-light-amber": { "role": "primary", "displayName": "Mooring-Light Amber", "canonical": "#ffd35c", "tonalRamp": ["#fff7e7", "#fde68a", "#ffd35c", "#fbbf24", "#f97316"] },
+      "sea-glass-mint": { "role": "secondary", "displayName": "Sea-Glass Mint", "canonical": "#bceee4", "tonalRamp": ["#d3dedc", "#bceee4", "#7fd4c4", "#376375"] },
+      "warning-coral": { "role": "tertiary", "displayName": "Warning Coral", "canonical": "#f08b80", "tonalRamp": ["#f8c3bc", "#f08b80", "#e06a5c"] },
+      "harbor-water": { "role": "neutral", "displayName": "Harbor Water", "canonical": "#1d3440", "tonalRamp": ["#122630", "#1d3440", "#23414d", "#25434f", "#274855", "#2f5665", "#376375"] },
+      "lamplight-cream": { "role": "neutral", "displayName": "Lamplight Cream", "canonical": "#fff7e7", "tonalRamp": ["#fff7e7", "#d3dedc"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles and hero statements; light weight, tight tracking." },
+      "label": { "displayName": "Eyebrow", "purpose": "Uppercase section wayfinding in Sea-Glass Mint; 0.1em tracking." },
+      "mono": { "displayName": "Index Mono", "purpose": "Step numbers, counters, timestamps; always tabular-nums." }
+    },
+    "shadows": [
+      { "name": "panel-float", "value": "0 16px 36px rgb(4 18 24 / 18%)", "purpose": "The one floating-surface shadow; .panel only." },
+      { "name": "mooring-glow", "value": "0 0 0 0.08rem rgb(251 191 36 / 10%), 0 0 0.52rem rgb(251 191 36 / 58%)", "purpose": "Brand-mark dot only — the lamp. Nothing else glows." }
+    ],
+    "motion": [
+      { "name": "ease-spring", "value": "linear(0, 0.155 3.24%, 0.3949 8.87%, 0.7929 19.9%, 0.9448 25.03%, 1.0434 31.1%, 1.0866 36.15%, 1.1018 40.2%, 1.1021 46.16%, 1.0734 56.18%, 1.0182 71.29%, 0.9962 84.19%, 1)", "purpose": "Every interactive element, 200ms — enforced by a base-layer hard rule." },
+      { "name": "ease-soft", "value": "linear(0, 0.0981 4.34%, 0.1924 8.83%, 0.3526 16.66%, 0.5014 25.23%, 0.6412 34.82%, 0.7483 44.04%, 0.8307 53.11%, 0.8876 61.29%, 0.9287 69.62%, 0.9783 88.16%, 0.9925 97.47%, 1)", "purpose": "Calmer alternative for larger ambient transitions." },
+      { "name": "button-lift", "value": "hover: translateY(-2px); active: translateY(1px) scale(0.985)", "purpose": "Standard press feedback for primary buttons." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "auth-short-1", "value": "max-height 700px" },
+      { "name": "auth-short-2", "value": "max-height 560px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The mooring lamp: amber fill, ink-teal text, spring lift on hover.",
+      "html": "<button class=\"ds-btn-primary\">Find an idea</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:0.75rem; min-height:3rem; padding:0.75rem 1.25rem; background:#ffd35c; color:#122630; font-weight:600; font-size:0.875rem; border:none; border-radius:0.8125rem; cursor:pointer; transition:all 200ms var(--ease-spring); } .ds-btn-primary:hover { background:rgb(255 211 92 / 90%); transform:translateY(-2px); } .ds-btn-primary:active { transform:translateY(1px) scale(0.985); } .ds-btn-primary:focus-visible { outline:2px solid #ffd35c; outline-offset:3px; } .ds-btn-primary:disabled { cursor:not-allowed; transform:none; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The floating workbench surface: harbor card, cream hairline, one soft shadow.",
+      "html": "<div class=\"ds-panel\">Panel content</div>",
+      "css": ".ds-panel { border:1px solid rgb(255 247 231 / 22%); border-radius:1rem; background:#274855; box-shadow:0 16px 36px rgb(4 18 24 / 18%); padding:1.25rem; }"
+    },
+    {
+      "name": "Eyebrow",
+      "kind": "custom",
+      "refersTo": "eyebrow",
+      "description": "Section wayfinding label: small, uppercase, sea-glass mint.",
+      "html": "<p class=\"ds-eyebrow\">01 / the idea lab</p>",
+      "css": ".ds-eyebrow { font-size:0.68rem; font-weight:600; letter-spacing:0.1em; line-height:1.2; text-transform:uppercase; color:#bceee4; }"
+    },
+    {
+      "name": "Brand Mark",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "ideator·dev wordmark with the glowing gradient dot.",
+      "html": "<a class=\"ds-brand\">ideator<span class=\"ds-brand__dot\"></span>dev</a>",
+      "css": ".ds-brand { display:inline-flex; align-items:baseline; font-family:Outfit, sans-serif; font-size:1.08rem; font-weight:700; letter-spacing:-0.055em; line-height:1; color:#fff7e7; } .ds-brand__dot { display:block; width:0.3rem; height:0.3rem; margin:0 0.14rem 0.05rem; border-radius:999px; background:linear-gradient(135deg, #fde68a 0%, #fbbf24 52%, #f97316 100%); box-shadow:0 0 0 0.08rem rgb(251 191 36 / 10%), 0 0 0.52rem rgb(251 191 36 / 58%); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Harbor for Half-Formed Ideas",
+    "overview": "The interface is a sheltered body of water at night: one deep calm surface (Harbor Water #1d3440), warm cream text, and a single warm lamp (Mooring-Light Amber #ffd35c) marking where action happens. Half-formed work floats on translucent panels with hairline cream borders; depth is pure CSS — one soft shadow, a 56px workbench grid, and radial glows, never imagery. Amber is rare and structural (actions, focus, brand dot); Sea-Glass Mint (#bceee4) is the wayfinding voice. Every interactive element answers with a 200ms spring easing that vanishes entirely under prefers-reduced-motion. The visuals extend the product's binding copy voice: plain, direct, evidence-flavored — the workspace exposes weak thinking rather than decorating it.",
+    "keyCharacteristics": [
+      "One dark teal water family for all surfaces",
+      "Amber as lamp (actions/focus/dot), mint as wayfinding",
+      "Light-weight tight-tracked display type in Outfit",
+      "Spring-eased micro-motion everywhere interactive",
+      "Pure CSS depth; no photography or illustration"
+    ],
+    "rules": [
+      { "name": "The Mooring-Light Rule", "body": "Amber is the lamp, not the paint — actions, focus, and brand dot only; never a background wash or text color.", "section": "colors" },
+      { "name": "The Warm Cream Rule", "body": "Text is always Lamplight Cream or Mist Green; never pure white or pure gray.", "section": "colors" },
+      { "name": "The Quiet Voice Rule", "body": "Large type is light and tight-tracked; bold 700 is reserved for the brand mark and tiny emphasis.", "section": "typography" },
+      { "name": "The Flat-At-Rest Rule", "body": "Surfaces are flat until interaction; lift is a response to hover/press, panels never gain shadows on hover.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do build new surfaces from the theme tokens",
+      "Do keep the 200ms spring feedback on every interactive element",
+      "Do use the eyebrow + mono-index pattern for wayfinding",
+      "Do keep copy plain, direct, and evidence-flavored",
+      "Do respect prefers-reduced-motion completely"
+    ],
+    "donts": [
+      "Don't hardcode raw Tailwind palette colors in product surfaces",
+      "Don't use amber as a background wash or text color",
+      "Don't introduce a third accent or pure white/gray text",
+      "Don't fabricate social proof (no testimonials or press exist)",
+      "Don't add shadows beyond panel-float and mooring-glow, or decorative imagery"
+    ]
+  }
+}

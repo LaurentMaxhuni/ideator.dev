@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeft, Check, ChevronRight, Code2, Compass, GitFork, Layers3, LoaderCircle, Palette, Pencil, Save, Sparkles, Target, UsersRound } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Code2, Compass, GitFork, Layers3, LoaderCircle, Palette, Pencil, Save, Sparkles, Target, Trash2, UsersRound } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { ArtifactSectionName, ForkMode, IdeaArtifact } from "@ideator.dev/ai";
@@ -83,32 +84,84 @@ function displaySection(section: ArtifactSectionName, value: unknown) {
   return <p className="text-sm leading-6 text-muted-foreground">This section could not be displayed in its expected shape.</p>;
 }
 
-function SectionCard({ section, value, onSaved }: { section: (typeof sectionMeta)[number]; value: unknown; onSaved: (section: ArtifactSectionName, value: unknown) => void }) {
+function SectionCard({ section, value, projectId, onSaved }: { section: (typeof sectionMeta)[number]; value: unknown; projectId: string; onSaved: (section: ArtifactSectionName, value: unknown) => void }) {
   const reduceMotion = useReducedMotion();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<unknown>(value);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [restoredNotice, setRestoredNotice] = useState(false);
+  const [cancelArmed, setCancelArmed] = useState(false);
   const Icon = section.icon;
+  const draftKey = `ideator:section-draft:${projectId}:${section.key}`;
+
+  function readStoredDraft(): unknown | null {
+    try {
+      const stored = window.sessionStorage.getItem(draftKey);
+      return stored === null ? null : JSON.parse(stored) as unknown;
+    } catch {
+      return null;
+    }
+  }
+
+  function storeDraft(next: unknown) {
+    try {
+      window.sessionStorage.setItem(draftKey, JSON.stringify(next));
+    } catch {
+      /* storage unavailable; the draft still lives in state */
+    }
+  }
+
+  function clearStoredDraft() {
+    try {
+      window.sessionStorage.removeItem(draftKey);
+    } catch {
+      /* ignore */
+    }
+  }
 
   function startEditing() {
-    setDraft(structuredClone(value));
+    const stored = readStoredDraft();
+    setDraft(stored ?? structuredClone(value));
+    setRestoredNotice(stored !== null);
+    setCancelArmed(false);
     setError("");
     setEditing(true);
+  }
+
+  function updateDraft(next: unknown) {
+    setDraft(next);
+    storeDraft(next);
+    setRestoredNotice(false);
+    setCancelArmed(false);
+  }
+
+  function cancelEditing() {
+    if (!cancelArmed) {
+      setCancelArmed(true);
+      return;
+    }
+
+    clearStoredDraft();
+    setCancelArmed(false);
+    setRestoredNotice(false);
+    setEditing(false);
   }
 
   async function save() {
     setSaving(true);
     setError("");
+    setCancelArmed(false);
 
     try {
-      const response = await fetch(`/api/projects/${window.location.pathname.split("/").pop() ?? ""}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ section: section.key, content: draft }) });
+      const response = await fetch(`/api/projects/${projectId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ section: section.key, content: draft }) });
       const payload = (await response.json()) as { error?: string; project?: { artifact?: IdeaArtifact | null } };
 
       if (!response.ok || !payload.project?.artifact) {
         throw new Error(payload.error || "That section could not be saved.");
       }
 
+      clearStoredDraft();
       onSaved(section.key, payload.project.artifact);
       setEditing(false);
     } catch (saveError) {
@@ -125,7 +178,7 @@ function SectionCard({ section, value, onSaved }: { section: (typeof sectionMeta
         <button type="button" onClick={startEditing} disabled={editing} className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-background/40 px-2.5 text-xs text-muted-foreground transition-[background-color,border-color,color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:border-primary/40 hover:text-foreground active:translate-y-px disabled:cursor-default disabled:border-primary/30 disabled:text-primary"><Pencil className="size-3.5" /> {editing ? "Editing" : "Edit"}</button>
       </div>
       <div className="mt-7 border-t border-border/70 pt-6">
-        {editing ? <form onSubmit={(event) => { event.preventDefault(); void save(); }}><ArtifactSectionEditor section={section.key} value={draft} onChange={setDraft} /><div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4"><span className="text-xs text-muted-foreground">Edit the fields directly. Required shapes stay protected.</span><div className="flex items-center gap-2"><button type="button" onClick={() => setEditing(false)} className="min-h-10 cursor-pointer rounded-md px-3 text-xs text-muted-foreground transition-[color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:text-foreground active:translate-y-px">Cancel</button><button type="submit" disabled={saving} className="button-lift inline-flex min-h-10 items-center gap-2 rounded-md bg-primary px-3.5 text-xs font-semibold text-primary-foreground disabled:cursor-wait disabled:opacity-60">{saving ? <LoaderCircle className="size-3.5 animate-spin" /> : <Save className="size-3.5" />} {saving ? "Saving" : "Save section"}</button></div></div>{error && <p id={`edit-${section.key}-error`} className="mt-3 text-xs text-destructive" role="alert">{error}</p>}</form> : displaySection(section.key, value)}
+        {editing ? <form onSubmit={(event) => { event.preventDefault(); void save(); }}><ArtifactSectionEditor section={section.key} value={draft} onChange={updateDraft} /><div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4"><span className="text-xs text-muted-foreground">{cancelArmed ? "Discard these edits? Click again to confirm." : restoredNotice ? "Restored your unsaved edits from this session." : "Edit the fields directly. Drafts survive a refresh. Required shapes stay protected."}</span><div className="flex items-center gap-2"><button type="button" onClick={cancelEditing} className={`min-h-10 cursor-pointer rounded-md px-3 text-xs transition-[color,transform] duration-180 ease-spring hover:-translate-y-0.5 active:translate-y-px ${cancelArmed ? "font-semibold text-destructive hover:text-destructive" : "text-muted-foreground hover:text-foreground"}`}>{cancelArmed ? "Discard changes" : "Cancel"}</button><button type="submit" disabled={saving} className="button-lift inline-flex min-h-10 items-center gap-2 rounded-md bg-primary px-3.5 text-xs font-semibold text-primary-foreground disabled:cursor-wait disabled:opacity-60">{saving ? <LoaderCircle className="size-3.5 animate-spin" /> : <Save className="size-3.5" />} {saving ? "Saving" : "Save section"}</button></div></div>{error && <p id={`edit-${section.key}-error`} className="mt-3 text-xs text-destructive" role="alert">{error}</p>}</form> : displaySection(section.key, value)}
       </div>
     </motion.article>
   );
@@ -140,11 +193,95 @@ export function WorkspaceClient({
   initialArtifact: IdeaArtifact;
   lineage: ProjectLineage;
 }) {
+  const router = useRouter();
   const [artifact, setArtifact] = useState(initialArtifact);
+  const [renaming, setRenaming] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
+  const [titleError, setTitleError] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const deleteConfirmed = deleteConfirmText.trim().toLowerCase() === artifact.projectName.trim().toLowerCase();
 
   function handleSaved(_section: ArtifactSectionName, value: unknown) {
     if (isRecord(value) && typeof value.projectName === "string" && isRecord(value.northStar)) {
       setArtifact(value as IdeaArtifact);
+    }
+  }
+
+  function startRenaming() {
+    setTitleDraft(artifact.projectName);
+    setTitleError("");
+    setRenaming(true);
+  }
+
+  async function saveTitle() {
+    const nextTitle = titleDraft.trim();
+
+    if (nextTitle.length < 3 || nextTitle.length > 120) {
+      setTitleError("Titles are 3–120 characters.");
+      return;
+    }
+
+    setSavingTitle(true);
+    setTitleError("");
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: nextTitle }),
+      });
+      const payload = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "We could not rename that project.");
+      }
+
+      setArtifact((current) => ({ ...current, projectName: nextTitle }));
+      setRenaming(false);
+      router.refresh();
+    } catch (renameError) {
+      setTitleError(renameError instanceof Error ? renameError.message : "We could not rename that project.");
+    } finally {
+      setSavingTitle(false);
+    }
+  }
+
+  function clearProjectDrafts() {
+    try {
+      const prefix = `ideator:section-draft:${project.id}:`;
+
+      for (const key of Object.keys(window.sessionStorage)) {
+        if (key.startsWith(prefix)) {
+          window.sessionStorage.removeItem(key);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function deleteThisProject() {
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+      const payload = (await response.json()) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "We could not delete that project.");
+      }
+
+      clearProjectDrafts();
+      router.push("/app");
+      router.refresh();
+    } catch (deleteFailure) {
+      setDeleteError(deleteFailure instanceof Error ? deleteFailure.message : "We could not delete that project.");
+      setDeleting(false);
     }
   }
 
@@ -155,7 +292,38 @@ export function WorkspaceClient({
         <div className="mt-10 flex flex-wrap items-start justify-between gap-6">
           <div>
             <p className="eyebrow">project workspace / {project.domain}</p>
-            <h1 className="display-type mt-4 max-w-[800px] text-4xl font-normal leading-[0.98] text-foreground sm:text-6xl">{artifact.projectName}</h1>
+            {renaming ? (
+              <form
+                className="mt-4 flex max-w-[800px] flex-wrap items-center gap-3"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void saveTitle();
+                }}
+              >
+                <label className="sr-only" htmlFor="project-title-input">Project title</label>
+                <input
+                  id="project-title-input"
+                  value={titleDraft}
+                  onChange={(event) => setTitleDraft(event.target.value)}
+                  autoFocus
+                  minLength={3}
+                  maxLength={120}
+                  className="min-h-12 w-full max-w-[560px] rounded-lg border border-input bg-background/45 px-4 text-2xl leading-tight text-foreground outline-none transition-colors duration-180 ease-spring focus:border-primary/60 sm:text-3xl"
+                />
+                <button type="submit" disabled={savingTitle} className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60">
+                  {savingTitle ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />} Save title
+                </button>
+                <button type="button" onClick={() => { setRenaming(false); setTitleError(""); }} className="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-muted-foreground transition-[color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:text-foreground active:translate-y-px">Cancel</button>
+                {titleError ? <p className="w-full text-xs text-destructive" role="alert">{titleError}</p> : null}
+              </form>
+            ) : (
+              <div className="mt-4 flex flex-wrap items-start gap-x-4 gap-y-3">
+                <h1 className="display-type max-w-[800px] text-4xl font-normal leading-[0.98] text-foreground sm:text-6xl">{artifact.projectName}</h1>
+                <button type="button" onClick={startRenaming} aria-label="Rename this project" className="mt-2 inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-md border border-border bg-background/40 px-2.5 text-xs text-muted-foreground transition-[background-color,border-color,color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:border-primary/40 hover:text-foreground active:translate-y-px">
+                  <Pencil className="size-3.5" /> Rename
+                </button>
+              </div>
+            )}
             <p className="mt-5 max-w-[620px] text-base leading-7 text-muted-foreground">The brief is raw material, not an answer. Inspect the behavior chain, challenge weak links, and edit every field in plain language.</p>
             {lineage.parent ? (
               <p className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -180,16 +348,70 @@ export function WorkspaceClient({
             >
               <Palette className="size-4 text-accent" aria-hidden="true" /> Logo ideas
             </a>
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmingDelete(true);
+                setDeleteError("");
+                setDeleteConfirmText("");
+              }}
+              aria-expanded={confirmingDelete}
+              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-destructive/40 px-3 text-xs font-semibold text-destructive transition-[background-color,border-color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:border-destructive hover:bg-destructive/10 active:translate-y-px"
+            >
+              <Trash2 className="size-3.5" aria-hidden="true" /> Delete
+            </button>
             <span className="rounded-sm border border-primary/35 bg-primary/10 px-3 py-2 tabular-nums text-[0.65rem] uppercase tracking-[0.13em] text-primary">{project.status}</span>
           </div>
         </div>
+
+        {confirmingDelete ? (
+          <div className="mt-6 rounded-xl border border-destructive/40 bg-destructive/[0.06] p-5" role="alertdialog" aria-labelledby="delete-project-heading">
+            <h2 id="delete-project-heading" className="text-sm font-semibold text-foreground">Delete this project?</h2>
+            <p className="mt-2 max-w-[560px] text-xs leading-5 text-muted-foreground">This permanently removes the project, its brief, its artifact sections, and its generation history. Forks survive, but they lose their link back to this project. This cannot be undone.</p>
+            <div className="mt-4 flex flex-wrap items-end gap-3">
+              <label className="block" htmlFor="delete-confirm-input">
+                <span className="block text-xs font-medium text-foreground">Type “{artifact.projectName}” to confirm</span>
+                <input
+                  id="delete-confirm-input"
+                  value={deleteConfirmText}
+                  onChange={(event) => setDeleteConfirmText(event.target.value)}
+                  autoComplete="off"
+                  className="mt-2 min-h-11 w-full max-w-[360px] rounded-md border border-input bg-background/45 px-3 text-sm text-foreground outline-none transition-colors duration-180 ease-spring focus:border-destructive/60"
+                  placeholder="Project title"
+                />
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void deleteThisProject()}
+                  disabled={!deleteConfirmed || deleting}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-md bg-destructive px-4 text-sm font-semibold text-foreground transition-[background-color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:bg-destructive/85 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {deleting ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" aria-hidden="true" />} {deleting ? "Deleting" : "Delete this project"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmingDelete(false);
+                    setDeleteConfirmText("");
+                    setDeleteError("");
+                  }}
+                  className="inline-flex min-h-11 items-center rounded-md px-3 text-sm text-muted-foreground transition-[color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:text-foreground active:translate-y-px"
+                >
+                  Keep it
+                </button>
+              </div>
+            </div>
+            {deleteError ? <p className="mt-3 text-xs text-destructive" role="alert">{deleteError}</p> : null}
+          </div>
+        ) : null}
       </div>
 
       {lineage.forks.length > 0 ? (
         <section className="panel-quiet rounded-xl p-5 sm:p-6" aria-labelledby="saved-forks-heading">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="eyebrow">saved multiverse</p>
+              <p className="eyebrow">saved directions</p>
               <h2 id="saved-forks-heading" className="mt-2 text-lg font-medium text-foreground">Forks from this project</h2>
             </div>
             <span className="tabular-nums text-xs text-muted-foreground">{lineage.forks.length} saved</span>
@@ -225,7 +447,7 @@ export function WorkspaceClient({
           <Link href="/app/new" className="mt-7 flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-md border border-border bg-background/35 text-xs font-semibold text-foreground transition-[background-color,border-color,color,transform] duration-180 ease-spring hover:-translate-y-0.5 hover:border-accent/45"><span>Shape another idea</span><ChevronRight className="size-3.5" /></Link>
         </aside>
         <div className="space-y-4">
-          {sectionMeta.map((section) => <SectionCard key={section.key} section={section} value={artifact[section.key]} onSaved={handleSaved} />)}
+          {sectionMeta.map((section) => <SectionCard key={section.key} section={section} value={artifact[section.key]} projectId={project.id} onSaved={handleSaved} />)}
         </div>
       </div>
     </div>

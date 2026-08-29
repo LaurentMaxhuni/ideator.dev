@@ -7,14 +7,12 @@ type BrandMarkProps = {
   dotClassName?: string;
 };
 
-export function BrandMark({ href = "/", tone = "default", className = "", dotClassName = "" }: BrandMarkProps) {
-  const textClass = tone === "light" ? "text-white" : "text-foreground";
-
+export function BrandMark({ href = "/", className = "", dotClassName = "" }: BrandMarkProps) {
   return (
-    <Link href={href} className={`brand-mark ${textClass} ${className}`}>
+    <Link href={href} className={`brand-mark text-foreground ${className}`}>
       <span>ideator</span>
       <span className={`brand-mark__dot ${dotClassName}`} aria-hidden="true" />
-      <span className={tone === "light" ? "text-white" : "text-foreground"}>dev</span>
+      <span className="text-foreground">dev</span>
     </Link>
   );
 }
