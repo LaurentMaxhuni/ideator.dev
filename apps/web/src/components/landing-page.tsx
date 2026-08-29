@@ -33,7 +33,7 @@ export function LandingPage() {
         headerCtaHref="/lab"
         eyebrow="idea discovery workbench"
         title="Need an idea?"
-        titleAccent="Start with something useful."
+        titleAccent="Make it yours."
         description="Choose who you want to help, what they might want to do, and what kind of thing to make. Get three starting ideas you can shape into your own."
         primaryCtaText="Get starting ideas"
         primaryCtaHref="/lab"
